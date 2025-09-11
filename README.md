@@ -1,2 +1,2 @@
 # opPictionary
-pictionary game
+pictionary game - readme
