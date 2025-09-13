@@ -120,6 +120,7 @@ pnpm type-check
 - **iOS**: Native iOS app via Expo
 - **Android**: Native Android app via Expo
 - **Web**: Web version for testing (limited touch support)
+- **Port**: May use 8081 or 8082 depending on availability
 
 ## Styling
 

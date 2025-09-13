@@ -41,7 +41,7 @@ export const useSocket = (): UseSocketReturn => {
 
   useEffect(() => {
     const newSocket = io(SERVER_URL, {
-      autoConnect: false,
+      transports: ['websocket'],
     });
 
     // Connection events

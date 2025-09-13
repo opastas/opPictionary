@@ -15,7 +15,7 @@ interface PathData {
   id: string;
   points: DrawingPoint[];
   color: string;
-  strokeWidth: number;
+  brushSize: number;
 }
 
 export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
@@ -56,7 +56,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       id: `path-${pathIdRef.current++}`,
       points: data.points,
       color: data.points[0]?.color || '#000000',
-      strokeWidth: data.points[0]?.brushSize || 5,
+      brushSize: data.points[0]?.brushSize || 5,
     };
     
     setPaths(prev => [...prev, newPath]);
@@ -118,7 +118,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
           id: `path-${pathIdRef.current++}`,
           points: currentPath,
           color: brushColor,
-          strokeWidth: brushSize,
+          brushSize: brushSize,
         };
         
         setPaths(prev => [...prev, newPath]);
@@ -202,7 +202,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               key={path.id}
               d={pointsToPath(path.points)}
               stroke={path.color}
-              strokeWidth={path.strokeWidth}
+              strokeWidth={path.brushSize}
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"
