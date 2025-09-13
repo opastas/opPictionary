@@ -18,7 +18,18 @@ const app = express();
 const server = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:5173",
+      "http://192.168.1.13:5173",
+      "http://192.168.1.13:5174",
+      "http://192.168.1.13:5175",
+      "http://192.168.1.13:8081",
+      "http://192.168.1.13:8082",
+      "http://localhost:8081",
+      "http://localhost:8082",
+      "exp://192.168.1.13:8081",
+      "exp://192.168.1.13:8082"
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -99,6 +110,27 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Reset game state (for testing)
+app.post('/reset', (req, res) => {
+  // Clear all players
+  gameRoom.players.clear();
+  gameRoom.drawerId = null;
+  gameRoom.guesserId = null;
+  gameRoom.secretWord = '';
+  gameRoom.messages = [];
+  gameRoom.gameState = GameState.WAITING;
+  
+  // Notify all clients to disconnect
+  io.emit('game-reset');
+  
+  res.json({ 
+    status: 'OK', 
+    message: 'Game state reset',
+    players: 0,
+    gameState: 'waiting'
+  });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -167,12 +199,13 @@ io.on('connection', (socket) => {
   socket.on('drawing-data', (data: DrawingData) => {
     // Only the drawer can send drawing data
     if (socket.id !== gameRoom.drawerId) {
+      console.log(`Drawing data rejected: ${socket.id} is not the drawer`);
       return;
     }
 
     // Broadcast drawing data to other players (the guesser)
     socket.to(gameRoom.id).emit('update-canvas', data);
-    console.log('Drawing data broadcasted to other players');
+    console.log(`Drawing data broadcasted from ${socket.id} to other players:`, data.points.length, 'points');
   });
 
   // Guess handler
@@ -181,8 +214,11 @@ io.on('connection', (socket) => {
     
     // Only the guesser can send guesses
     if (socket.id !== gameRoom.guesserId) {
+      console.log(`Guess rejected: ${socket.id} is not the guesser`);
       return;
     }
+    
+    console.log(`Guess received from ${socket.id}: "${guess}"`);
 
     const player = gameRoom.players.get(socket.id);
     if (!player) return;
@@ -276,8 +312,9 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Pictionary server running on port ${PORT}`);
   console.log(`🎮 Game room: ${gameRoom.id}`);
   console.log(`📝 Secret word: ${gameRoom.secretWord || 'Not set yet'}`);
+  console.log(`🌐 Server accessible at: http://192.168.1.13:${PORT}`);
 });
