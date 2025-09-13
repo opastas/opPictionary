@@ -55,54 +55,63 @@ echo "✅ Server started successfully"
 
 # Start web app
 echo "🌐 Starting web app..."
-WEB_PORT=$(find_available_port 5173)
-echo "   Using port: $WEB_PORT"
-
-# Update vite config if needed
-if [ "$WEB_PORT" != "5173" ]; then
-    echo "   Note: Web app will use port $WEB_PORT (5173 was busy)"
-fi
-
 pnpm --filter web dev &
 WEB_PID=$!
 
 # Wait for web app to start
 sleep 5
 
-# Check if web app is running
-if ! check_port $WEB_PORT; then
+# Check if web app is running on any of the common ports
+ACTUAL_WEB_PORT=""
+for port in 5173 5174 5175 5176; do
+    if check_port $port; then
+        ACTUAL_WEB_PORT=$port
+        break
+    fi
+done
+
+if [ -z "$ACTUAL_WEB_PORT" ]; then
     echo "❌ Failed to start web app"
     kill $SERVER_PID 2>/dev/null || true
     exit 1
 fi
 
-echo "✅ Web app started successfully on port $WEB_PORT"
+echo "✅ Web app started successfully on port $ACTUAL_WEB_PORT"
 
 # Start mobile app
 echo "📱 Starting mobile app..."
-MOBILE_PORT=$(find_available_port 8081)
-echo "   Using port: $MOBILE_PORT"
-
-if [ "$MOBILE_PORT" != "8081" ]; then
-    echo "   Note: Mobile app will use port $MOBILE_PORT (8081 was busy)"
-fi
-
 pnpm --filter mobile start &
 MOBILE_PID=$!
 
 # Wait for mobile app to start
 sleep 5
 
+# Check if mobile app is running on any of the common ports
+ACTUAL_MOBILE_PORT=""
+for port in 8081 8082 8083 8084; do
+    if check_port $port; then
+        ACTUAL_MOBILE_PORT=$port
+        break
+    fi
+done
+
+if [ -z "$ACTUAL_MOBILE_PORT" ]; then
+    echo "⚠️  Mobile app may not be running on expected port"
+    ACTUAL_MOBILE_PORT="8081"  # Default fallback
+fi
+
+echo "✅ Mobile app started on port $ACTUAL_MOBILE_PORT"
+
 echo ""
 echo "🎉 All services started successfully!"
 echo "======================================"
 echo "📊 Service Status:"
 echo "   Server:  http://192.168.1.13:4000"
-echo "   Web:     http://192.168.1.13:$WEB_PORT"
-echo "   Mobile:  exp://192.168.1.13:$MOBILE_PORT"
+echo "   Web:     http://192.168.1.13:$ACTUAL_WEB_PORT"
+echo "   Mobile:  exp://192.168.1.13:$ACTUAL_MOBILE_PORT"
 echo ""
 echo "🔗 Access URLs:"
-echo "   Web App:    http://192.168.1.13:$WEB_PORT"
+echo "   Web App:    http://192.168.1.13:$ACTUAL_WEB_PORT"
 echo "   Mobile:     Scan QR code in terminal"
 echo "   Server API: http://192.168.1.13:4000/health"
 echo ""

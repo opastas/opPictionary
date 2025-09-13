@@ -55,17 +55,20 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         return {
           backgroundColor: '#e3f2fd',
           borderLeft: '4px solid #2196f3',
-          fontStyle: 'italic' as const
+          fontStyle: 'italic' as const,
+          color: '#333'
         };
       case 'guess':
         return {
           backgroundColor: '#fff3e0',
-          borderLeft: '4px solid #ff9800'
+          borderLeft: '4px solid #ff9800',
+          color: '#333'
         };
       default:
         return {
           backgroundColor: '#f5f5f5',
-          borderLeft: '4px solid #4caf50'
+          borderLeft: '4px solid #4caf50',
+          color: '#333'
         };
     }
   };
@@ -143,7 +146,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
                 alignItems: 'center',
                 marginBottom: '4px'
               }}>
-                <strong style={{ fontSize: '14px' }}>
+                <strong style={{ fontSize: '14px', color: '#333' }}>
                   {message.userName}
                   {message.type === 'guess' && ' (guess)'}
                   {message.type === 'system' && ' (system)'}
@@ -152,7 +155,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
                   {formatTime(message.timestamp)}
                 </span>
               </div>
-              <div style={{ fontSize: '14px' }}>
+              <div style={{ fontSize: '14px', color: '#333' }}>
                 {message.message}
               </div>
             </div>

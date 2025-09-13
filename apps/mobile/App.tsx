@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSocket } from './hooks/useSocket';
-import { DrawingCanvas } from './components/DrawingCanvas';
+import { SimpleCanvas } from './components/SimpleCanvas';
 import type { DrawingData } from 'shared-types';
 
 export default function App() {
@@ -157,7 +157,7 @@ export default function App() {
           <Text style={styles.sectionTitle}>
             {isDrawer ? 'Draw the word!' : 'Watch the drawing!'}
           </Text>
-          <DrawingCanvas
+          <SimpleCanvas
             isDrawer={isDrawer}
             onDrawingData={handleDrawingData}
             onCanvasUpdate={handleCanvasUpdate}

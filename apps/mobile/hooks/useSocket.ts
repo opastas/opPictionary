@@ -112,6 +112,32 @@ export const useSocket = (): UseSocketReturn => {
 
     newSocket.on('correct-guess', (data) => {
       console.log('Correct guess!', data);
+      // Show success message
+      const successMessage: ChatMessage = {
+        id: Date.now().toString(),
+        roomId: 'main-room',
+        userId: 'system',
+        userName: 'System',
+        message: `🎉 Correct! The word was "${data.word}". You earned ${data.points} points!`,
+        timestamp: new Date(),
+        type: 'system'
+      };
+      setMessages(prev => [...prev, successMessage]);
+    });
+
+    newSocket.on('round-ended', (data) => {
+      console.log('Round ended:', data);
+      // Show round end message
+      const endMessage: ChatMessage = {
+        id: Date.now().toString(),
+        roomId: 'main-room',
+        userId: 'system',
+        userName: 'System',
+        message: `Round ended! The correct word was "${data.correctWord}". Game over!`,
+        timestamp: new Date(),
+        type: 'system'
+      };
+      setMessages(prev => [...prev, endMessage]);
     });
 
     // Room events

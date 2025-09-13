@@ -36,7 +36,7 @@ export interface DrawingPoint {
 export interface DrawingData {
   roomId: string;
   points: DrawingPoint[];
-  action: 'start' | 'draw' | 'end';
+  action: 'start' | 'draw' | 'end' | 'clear';
 }
 
 // Chat Message Type
