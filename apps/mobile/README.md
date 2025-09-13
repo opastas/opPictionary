@@ -13,7 +13,7 @@ A React Native + Expo mobile application for the multiplayer Pictionary game.
 ## Dependencies
 
 - `expo` - React Native development platform
-- `react-native-svg` - SVG rendering for drawings
+- Native React Native Views - for drawing canvas rendering
 - `socket.io-client` - Real-time communication
 - `react-native-gesture-handler` - Touch gesture handling
 - `shared-types` - Type-safe interfaces from monorepo
@@ -38,9 +38,9 @@ Manages Socket.IO connection and game state:
 - Event emission
 
 ### `DrawingCanvas` Component
-Touch-based drawing canvas using react-native-svg:
+Touch-based drawing canvas using native React Native Views:
 - PanResponder for touch handling
-- SVG Path elements for drawing
+- Circular View elements for drawing points
 - Brush color and size controls
 - Real-time drawing data transmission
 - Canvas clearing functionality
@@ -75,7 +75,7 @@ pnpm type-check
 
 ### Touch Drawing
 - Uses PanResponder for smooth touch handling
-- SVG Path elements for vector-based drawing
+- Circular View elements for drawing points
 - Brush size and color controls
 - Real-time drawing synchronization
 
@@ -148,6 +148,6 @@ To test the mobile app:
 - Verify EXPO_PUBLIC_SERVER_URL in .env file
 
 ### Drawing Issues
-- Ensure react-native-svg is properly installed
+- Ensure native View rendering works properly
 - Check PanResponder touch handling
-- Verify SVG Path rendering
+- Verify circular drawing points display correctly
