@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSocket } from './hooks/useSocket';
+import { useSocket } from './hooks/useSocketSimple';
 import { DrawingCanvas } from './components/DrawingCanvas';
 import { ChatBox } from './components/ChatBox';
 import type { DrawingData } from 'shared-types';

@@ -40,19 +40,25 @@ export const useSocket = (): UseSocketReturn => {
   const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
+    console.log('Connecting to server:', SERVER_URL);
     const newSocket = io(SERVER_URL, {
-      autoConnect: false,
+      transports: ['websocket'],
+      autoConnect: true,
     });
 
     // Connection events
     newSocket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('✅ Connected to server:', SERVER_URL);
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      console.log('❌ Disconnected from server');
       setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Connection error:', error);
     });
 
     // Game events
