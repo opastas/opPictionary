@@ -92,7 +92,14 @@ cd ../..
 
 ## 🏃‍♂️ Running the Application
 
-You'll need to run three separate terminals to start all components:
+### Quick Start (All Services)
+```bash
+./scripts/start-all.sh
+```
+This will start all services automatically and show you the correct URLs.
+
+### Manual Start (Three Terminals)
+You can also run three separate terminals to start all components:
 
 ### Terminal 1: Start the Server
 
@@ -100,11 +107,28 @@ You'll need to run three separate terminals to start all components:
 pnpm --filter server dev
 ```
 
-The server will start on `http://localhost:4000` and show:
+The server will start on `http://192.168.1.13:4000` and show:
 ```
 🚀 Pictionary server running on port 4000
 🎮 Game room: main-room
 📝 Secret word: [word]
+🌐 Server accessible at: http://192.168.1.13:4000
+```
+
+**Troubleshooting Server Issues:**
+If you get "port already in use" errors, use the server manager script:
+```bash
+# Check server status
+./scripts/server-manager.sh status
+
+# Stop server if needed
+./scripts/server-manager.sh stop
+
+# Start server
+./scripts/server-manager.sh start
+
+# Restart server
+./scripts/server-manager.sh restart
 ```
 
 ### Terminal 2: Start the Web App
@@ -113,7 +137,7 @@ The server will start on `http://localhost:4000` and show:
 pnpm --filter web dev
 ```
 
-The web app will start on `http://localhost:5173` and automatically open in your browser.
+The web app will start on `http://localhost:5173` (or next available port like 5174, 5175) and automatically open in your browser.
 
 ### Terminal 3: Start the Mobile App
 
@@ -130,6 +154,13 @@ This will start the Expo development server. You can then:
 
 ## 🎯 How to Play
 
+### Cross-Platform Gameplay
+Players can play together using **any combination** of:
+- 🌐 **Web browsers** (Chrome, Firefox, Safari, Edge)
+- 📱 **Mobile devices** (iOS/Android via Expo Go)
+- 💻 **Desktop computers** (Windows, Mac, Linux)
+
+### Game Flow
 1. **Join the Game**: Enter your name in either the web or mobile app
 2. **Role Assignment**: 
    - First player becomes the **drawer** (sees the secret word)
@@ -137,6 +168,12 @@ This will start the Expo development server. You can then:
 3. **Drawing Phase**: The drawer draws the secret word on the canvas
 4. **Guessing Phase**: The guesser watches the drawing and submits guesses
 5. **Scoring**: Correct guesses award 10 points and end the round
+
+### Testing Cross-Platform Play
+- **Web + Mobile**: One player on web, one on mobile
+- **Web + Web**: Two players on different web browsers  
+- **Mobile + Mobile**: Two players on different mobile devices
+- **Mixed**: Any combination of the above
 
 ## 📁 Project Structure
 
@@ -247,7 +284,11 @@ pnpm --filter mobile build
 
 - **Mobile can't connect**: Check that the IP address in `.env` is correct
 - **Server not starting**: Ensure port 4000 is not in use
-- **Web app not loading**: Check that port 5173 is available
+- **Web app not loading**: Check that port 5173 is available (may use 5174, 5175, etc.)
+- **Port conflicts**: Use `./scripts/start-all.sh` to automatically find available ports
+- **Mobile app port issues**: May use 8081 or 8082 depending on availability
+- **Game state issues**: Use `./scripts/reset-game.sh` to clear all players and reset the game
+- **"Room full" errors**: Reset the game state to clear old connections
 
 ## 📱 Platform Support
 
