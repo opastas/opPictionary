@@ -142,6 +142,14 @@ export default function App() {
           <Text style={styles.connectionStatus}>
             Players: {players.length}/2 | Status: {isConnected ? '✅ Connected' : '❌ Disconnected'}
           </Text>
+          {/* Timer Display */}
+          {gameStarted && gameState?.timeLeft && (
+            <View style={styles.timerContainer}>
+              <Text style={styles.timerText}>
+                ⏰ Time Left: {gameState.timeLeft} seconds
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Secret Word Display */}
@@ -342,6 +350,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  timerContainer: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 8,
+    alignSelf: 'center',
+  },
+  timerText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   header: {
     backgroundColor: 'white',

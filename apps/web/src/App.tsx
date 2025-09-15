@@ -258,8 +258,16 @@ function App() {
               <strong>Game Status:</strong> {gameState?.round || 1} / {gameState?.maxRounds || 1} rounds
             </div>
             {gameState?.timeLeft && (
-              <div>
-                <strong>Time Left:</strong> {gameState.timeLeft} seconds
+              <div style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                marginTop: '8px'
+              }}>
+                ⏰ Time Left: {gameState.timeLeft} seconds
               </div>
             )}
             <div>
