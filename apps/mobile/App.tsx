@@ -142,27 +142,28 @@ export default function App() {
           <Text style={styles.connectionStatus}>
             Players: {players.length}/2 | Status: {isConnected ? '✅ Connected' : '❌ Disconnected'}
           </Text>
+          
           {/* Timer Display */}
-      {gameStarted && gameState?.timeLeft && (
-        <View style={styles.timerContainer}>
-          <Text style={styles.timerText}>
-            ⏰ Game Time: {gameState.timeLeft} seconds
-          </Text>
-        </View>
-      )}
-      
-      {gameState?.guesserTimeLeft && isGuesser && (
-        <View style={[
-          styles.timerContainer,
-          { 
-            backgroundColor: gameState.guesserTimeLeft <= 3 ? '#dc3545' : '#28a745'
-          }
-        ]}>
-          <Text style={styles.timerText}>
-            🎯 Guess Time: {gameState.guesserTimeLeft} seconds
-          </Text>
-        </View>
-      )}
+          {gameStarted && gameState?.timeLeft && (
+            <View style={styles.timerContainer}>
+              <Text style={styles.timerText}>
+                ⏰ Game Time: {gameState.timeLeft} seconds
+              </Text>
+            </View>
+          )}
+          
+          {gameState?.guesserTimeLeft !== undefined && isGuesser && (
+            <View style={[
+              styles.timerContainer,
+              { 
+                backgroundColor: gameState.guesserTimeLeft <= 3 ? '#dc3545' : '#28a745'
+              }
+            ]}>
+              <Text style={styles.timerText}>
+                🎯 Guess Time: {gameState.guesserTimeLeft} seconds
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Secret Word Display */}
@@ -222,7 +223,7 @@ export default function App() {
 
           {/* Input Area */}
           <View style={styles.inputContainer}>
-            {isGuesser && (
+            {isGuesser && gameState?.gameState === 'playing' && (
               <View style={styles.guessContainer}>
                 <TextInput
                   style={styles.guessInput}
@@ -238,6 +239,14 @@ export default function App() {
                 >
                   <Text style={styles.guessButtonText}>Guess</Text>
                 </TouchableOpacity>
+              </View>
+            )}
+            
+            {isGuesser && gameState?.gameState === 'round_end' && (
+              <View style={styles.gameOverContainer}>
+                <Text style={styles.gameOverText}>
+                  🎮 Game Over! Time's up!
+                </Text>
               </View>
             )}
             
@@ -543,6 +552,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  gameOverContainer: {
+    backgroundColor: '#ffebee',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: '#f44336',
+  },
+  gameOverText: {
+    color: '#d32f2f',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   gameStatusContainer: {
     backgroundColor: 'white',

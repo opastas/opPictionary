@@ -232,6 +232,7 @@ function App() {
           <ChatBox
             messages={messages}
             isGuesser={isGuesser}
+            gameState={gameState?.gameState}
             onSendGuess={handleSendGuess}
             onSendMessage={handleSendMessage}
           />
@@ -271,7 +272,7 @@ function App() {
         </div>
       )}
       
-      {gameState?.guesserTimeLeft && isGuesser && (
+      {gameState?.guesserTimeLeft !== undefined && isGuesser && (
         <div style={{
           backgroundColor: gameState.guesserTimeLeft <= 3 ? '#dc3545' : '#28a745',
           color: 'white',
