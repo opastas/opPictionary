@@ -34,6 +34,7 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
   const pathId = useRef<string>('');
   const isDrawingRef = useRef<boolean>(false); // Use ref to avoid stale closures
   const touchStartTime = useRef<number>(0);
+  const pathCounter = useRef<number>(0); // Counter for unique path IDs
 
   // Validate coordinates and check if they're within canvas bounds
   const validateCoordinates = useCallback((x: number, y: number): { x: number; y: number; isValid: boolean } => {
@@ -162,9 +163,10 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
         brushSize 
       };
       
-      // Generate unique path ID and record touch start time
-      pathId.current = `path-${Date.now()}-${Math.random()}`;
-      touchStartTime.current = Date.now();
+          // Generate unique path ID and record touch start time
+          pathCounter.current += 1;
+          pathId.current = `path-${Date.now()}-${pathCounter.current}-${Math.random().toString(36).substr(2, 9)}`;
+          touchStartTime.current = Date.now();
       
       setIsDrawing(true);
       isDrawingRef.current = true;
