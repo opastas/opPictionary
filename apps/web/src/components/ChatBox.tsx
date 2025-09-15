@@ -4,6 +4,7 @@ import type { ChatMessage } from 'shared-types';
 interface ChatBoxProps {
   messages: ChatMessage[];
   isGuesser: boolean;
+  gameState?: string;
   onSendGuess: (guess: string) => void;
   onSendMessage: (message: string) => void;
 }
@@ -11,6 +12,7 @@ interface ChatBoxProps {
 export const ChatBox: React.FC<ChatBoxProps> = ({
   messages,
   isGuesser,
+  gameState,
   onSendGuess,
   onSendMessage
 }) => {
@@ -93,7 +95,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         alignItems: 'center'
       }}>
         <h3 style={{ margin: 0, fontSize: '16px' }}>Chat & Guesses</h3>
-        {isGuesser && (
+        {isGuesser && gameState === 'playing' && (
           <button
             onClick={toggleGuessMode}
             style={{
@@ -108,6 +110,19 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
           >
             {isGuessMode ? 'Switch to Chat' : 'Switch to Guess'}
           </button>
+        )}
+        
+        {isGuesser && gameState === 'round_end' && (
+          <div style={{
+            padding: '4px 8px',
+            backgroundColor: '#f44336',
+            color: 'white',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}>
+            🎮 Game Over!
+          </div>
         )}
       </div>
 
