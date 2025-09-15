@@ -165,7 +165,7 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
       
           // Generate unique path ID and record touch start time
           pathCounter.current += 1;
-          pathId.current = `path-${Date.now()}-${pathCounter.current}-${Math.random().toString(36).substr(2, 9)}`;
+          pathId.current = `path-${Date.now()}-${pathCounter.current}-${Math.random().toString(36).substr(2, 9)}-${Math.random().toString(36).substr(2, 9)}`;
           touchStartTime.current = Date.now();
       
       setIsDrawing(true);
