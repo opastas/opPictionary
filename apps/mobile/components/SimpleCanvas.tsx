@@ -22,21 +22,26 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
   const [currentColor, setCurrentColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(4);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [showTouchFeedback, setShowTouchFeedback] = useState(false);
   const lastEmitTime = useRef<number>(0);
   const emitThrottle = 16; // ~60fps for better performance
   const pendingPoints = useRef<DrawingPoint[]>([]);
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastPoint = useRef<DrawingPoint | null>(null);
-  const minDistance = 2.0; // Increased minimum distance to prevent unwanted lines
+  const minDistance = 3.0; // Increased minimum distance to prevent unwanted lines
+  const minTouchArea = 5.0; // Minimum touch area to start drawing
   const canvasRef = useRef<View>(null);
   const pathId = useRef<string>('');
   const isDrawingRef = useRef<boolean>(false); // Use ref to avoid stale closures
+  const touchStartTime = useRef<number>(0);
 
-  // Validate and clamp coordinates to canvas bounds
-  const validateCoordinates = useCallback((x: number, y: number): { x: number; y: number } => {
+  // Validate coordinates and check if they're within canvas bounds
+  const validateCoordinates = useCallback((x: number, y: number): { x: number; y: number; isValid: boolean } => {
+    const isValid = x >= 0 && x <= width && y >= 0 && y <= height;
     return {
       x: Math.max(0, Math.min(x, width)),
-      y: Math.max(0, Math.min(y, height))
+      y: Math.max(0, Math.min(y, height)),
+      isValid
     };
   }, [width, height]);
 
@@ -66,6 +71,12 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
     return (dx * dx + dy * dy) >= (minDistance * minDistance);
   }, [minDistance]);
 
+  // Check if touch is in a valid drawing area (not too close to edges)
+  const isInValidDrawingArea = useCallback((x: number, y: number): boolean => {
+    return x >= minTouchArea && x <= (width - minTouchArea) && 
+           y >= minTouchArea && y <= (height - minTouchArea);
+  }, [width, height, minTouchArea]);
+
   // Throttled emit function
   const throttledEmit = useCallback((data: DrawingData) => {
     const now = Date.now();
@@ -87,27 +98,14 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
         action
       });
     } else {
-      // Batch draw actions
-      pendingPoints.current.push(point);
-      
-      // Clear existing timeout
-      if (batchTimeout.current) {
-        clearTimeout(batchTimeout.current);
-      }
-      
-      // Set new timeout to send batched points
-      batchTimeout.current = setTimeout(() => {
-        if (pendingPoints.current.length > 0 && onDrawingData) {
-          onDrawingData({
-            roomId: 'main-room',
-            points: [...pendingPoints.current],
-            action: 'draw'
-          });
-          pendingPoints.current = [];
-        }
-      }, 25); // Send batched points every 25ms for more responsive drawing
+      // Send individual points immediately for better sync with web
+      throttledEmit({
+        roomId: 'main-room',
+        points: [point],
+        action: 'draw'
+      });
     }
-  }, [throttledEmit, onDrawingData]);
+  }, [throttledEmit]);
 
   // Handle canvas updates from socket
   useEffect(() => {
@@ -142,9 +140,18 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
       const { locationX, locationY } = evt.nativeEvent;
       const validatedCoords = validateCoordinates(locationX, locationY);
       
-      // Check if touch is within canvas bounds
-      if (validatedCoords.x < 0 || validatedCoords.x > width || 
-          validatedCoords.y < 0 || validatedCoords.y > height) {
+      // Only start drawing if touch is within canvas bounds
+      if (!validatedCoords.isValid) {
+        return;
+      }
+      
+      // Additional check to prevent drawing at (0,0) which causes issues
+      if (validatedCoords.x === 0 && validatedCoords.y === 0) {
+        return;
+      }
+      
+      // Check if touch is in a valid drawing area (not too close to edges)
+      if (!isInValidDrawingArea(validatedCoords.x, validatedCoords.y)) {
         return;
       }
       
@@ -155,8 +162,9 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
         brushSize 
       };
       
-      // Generate unique path ID
+      // Generate unique path ID and record touch start time
       pathId.current = `path-${Date.now()}-${Math.random()}`;
+      touchStartTime.current = Date.now();
       
       setIsDrawing(true);
       isDrawingRef.current = true;
@@ -173,8 +181,7 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
       const validatedCoords = validateCoordinates(locationX, locationY);
       
       // Check if touch is still within canvas bounds
-      if (validatedCoords.x < 0 || validatedCoords.x > width || 
-          validatedCoords.y < 0 || validatedCoords.y > height) {
+      if (!validatedCoords.isValid) {
         // Stop drawing if finger leaves canvas
         setIsDrawing(false);
         isDrawingRef.current = false;
@@ -192,6 +199,11 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
           points: [],
           action: 'end'
         });
+        return;
+      }
+      
+      // Additional check to prevent drawing at (0,0)
+      if (validatedCoords.x === 0 && validatedCoords.y === 0) {
         return;
       }
       
@@ -215,18 +227,23 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
     onPanResponderRelease: () => {
       if (!isDrawer || !isDrawingRef.current) return;
       
+      // Check minimum touch duration to prevent accidental touches
+      const touchDuration = Date.now() - touchStartTime.current;
+      const minTouchDuration = 50; // 50ms minimum touch duration
+      
       setIsDrawing(false);
       isDrawingRef.current = false;
       
-      // Add current path to paths
-      if (currentPath.length > 0) {
+      // Only add path if touch was long enough and has enough points
+      if (touchDuration >= minTouchDuration && currentPath.length > 0) {
         const newPath = {
           id: pathId.current,
           points: [...currentPath]
         };
         setPaths(prev => [...prev, newPath]);
-        setCurrentPath([]);
       }
+      
+      setCurrentPath([]);
       
       // Reset last point and path ID
       lastPoint.current = null;
