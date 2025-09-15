@@ -1,0 +1,32 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "expo": "~54.0.6",
+    "expo-status-bar": "~3.0.8",
+    "metro": "^0.80.0",
+    "metro-config": "^0.80.0",
+    "metro-react-native-babel-transformer": "^0.77.0",
+    "metro-resolver": "^0.80.0",
+    "react": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-web": "^0.21.0",
+    "shared-types": "workspace:*",
+    "socket.io-client": "^4.7.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.13",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}

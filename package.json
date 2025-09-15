@@ -1,0 +1,39 @@
+{
+  "name": "pictionary-game",
+  "version": "1.0.0",
+  "description": "A multiplayer pictionary game with web, mobile, and server components",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter shared-types build\" \"pnpm --filter server dev\" \"pnpm --filter web dev\" \"pnpm --filter mobile start\"",
+    "build": "pnpm --filter shared-types build && pnpm --filter server build && pnpm --filter web build && pnpm --filter mobile build",
+    "start": "concurrently \"pnpm --filter server start\" \"pnpm --filter web preview\" \"pnpm --filter mobile start\"",
+    "clean": "pnpm -r exec rm -rf dist node_modules",
+    "install:all": "pnpm install",
+    "type-check": "pnpm -r exec tsc --noEmit",
+    "server:dev": "pnpm --filter server dev",
+    "web:dev": "pnpm --filter web dev",
+    "mobile:dev": "pnpm --filter mobile start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "pnpm": {
+    "overrides": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "@types/react": "19.1.13",
+      "@types/react-dom": "19.1.0"
+    }
+  }
+}
