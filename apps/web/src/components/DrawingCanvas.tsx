@@ -136,6 +136,11 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     setCurrentPath([]);
   }, [isDrawing, isDrawer, currentPath, onDrawingData]);
 
+  // Store all received points for proper rendering
+  const [receivedPaths, setReceivedPaths] = useState<{ id: string; points: DrawingPoint[] }[]>([]);
+  const [currentReceivedPath, setCurrentReceivedPath] = useState<DrawingPoint[]>([]);
+  const currentPathId = useRef<string>('');
+
   // Handle drawing data from other players
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -148,32 +153,46 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     const handleCanvasUpdate = (data: DrawingData) => {
       if (isDrawer) return; // Don't draw if we're the drawer
 
-      ctx.strokeStyle = data.points[0]?.color || '#000000';
-      ctx.lineWidth = data.points[0]?.brushSize || 5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+      if (data.action === 'clear') {
+        // Clear canvas and reset paths
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        setReceivedPaths([]);
+        setCurrentReceivedPath([]);
+        currentPathId.current = '';
+        return;
+      }
 
-      if (data.points.length === 1) {
-        // Single point
-        const point = data.points[0];
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, point.brushSize / 2, 0, 2 * Math.PI);
-        ctx.fill();
-      } else if (data.points.length > 1) {
-        // Multiple points - draw lines
-        ctx.beginPath();
-        ctx.moveTo(data.points[0].x, data.points[0].y);
-        
-        for (let i = 1; i < data.points.length; i++) {
-          ctx.lineTo(data.points[i].x, data.points[i].y);
+      if (data.action === 'start') {
+        // Start new path
+        currentPathId.current = `path-${Date.now()}-${Math.random()}`;
+        setCurrentReceivedPath(data.points);
+        return;
+      }
+
+      if (data.action === 'draw') {
+        // Add points to current path
+        setCurrentReceivedPath(prev => [...prev, ...data.points]);
+        return;
+      }
+
+      if (data.action === 'end') {
+        // End current path and add to completed paths
+        if (currentReceivedPath.length > 0) {
+          setReceivedPaths(prev => [...prev, {
+            id: currentPathId.current,
+            points: [...currentReceivedPath]
+          }]);
+          setCurrentReceivedPath([]);
+          currentPathId.current = '';
         }
-        ctx.stroke();
+        return;
       }
     };
 
     // Store the handler for external use
     (canvas as any).handleCanvasUpdate = handleCanvasUpdate;
-  }, [isDrawer]);
+  }, [isDrawer, width, height]);
 
   // Clear canvas
   const clearCanvas = useCallback(() => {
@@ -196,48 +215,75 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     onDrawingData(drawingData);
   }, [width, height, onClearCanvas, onDrawingData]);
 
-  // Handle canvas updates from socket
-  const handleCanvasUpdate = useCallback((data: DrawingData) => {
+  // Render all received paths using dot-based approach (matching mobile)
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    if (isDrawer) return; // Don't draw if we're the drawer
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
 
-    // Handle clear action
-    if (data.action === 'clear') {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
-      return;
-    }
-
-    // Handle drawing actions
-    if (data.points && data.points.length > 0) {
-      ctx.strokeStyle = data.points[0]?.color || '#000000';
-      ctx.lineWidth = data.points[0]?.brushSize || 5;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      if (data.points.length === 1) {
-        // Single point
-        const point = data.points[0];
+    // Draw all completed paths
+    receivedPaths.forEach(path => {
+      path.points.forEach(point => {
+        ctx.fillStyle = point.color;
         ctx.beginPath();
         ctx.arc(point.x, point.y, point.brushSize / 2, 0, 2 * Math.PI);
         ctx.fill();
-      } else if (data.points.length > 1) {
-        // Multiple points - draw lines
-        ctx.beginPath();
-        ctx.moveTo(data.points[0].x, data.points[0].y);
-        
-        for (let i = 1; i < data.points.length; i++) {
-          ctx.lineTo(data.points[i].x, data.points[i].y);
-        }
-        ctx.stroke();
-      }
+      });
+    });
+
+    // Draw current path being drawn
+    currentReceivedPath.forEach(point => {
+      ctx.fillStyle = point.color;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, point.brushSize / 2, 0, 2 * Math.PI);
+      ctx.fill();
+    });
+  }, [receivedPaths, currentReceivedPath, width, height]);
+
+  // Handle canvas updates from socket
+  const handleCanvasUpdate = useCallback((data: DrawingData) => {
+    if (isDrawer) return; // Don't process if we're the drawer
+
+    if (data.action === 'clear') {
+      // Clear canvas and reset paths
+      setReceivedPaths([]);
+      setCurrentReceivedPath([]);
+      currentPathId.current = '';
+      return;
     }
-  }, [isDrawer, width, height]);
+
+    if (data.action === 'start') {
+      // Start new path
+      currentPathId.current = `path-${Date.now()}-${Math.random()}`;
+      setCurrentReceivedPath(data.points);
+      return;
+    }
+
+    if (data.action === 'draw') {
+      // Add points to current path
+      setCurrentReceivedPath(prev => [...prev, ...data.points]);
+      return;
+    }
+
+    if (data.action === 'end') {
+      // End current path and add to completed paths
+      if (currentReceivedPath.length > 0) {
+        setReceivedPaths(prev => [...prev, {
+          id: currentPathId.current,
+          points: [...currentReceivedPath]
+        }]);
+        setCurrentReceivedPath([]);
+        currentPathId.current = '';
+      }
+      return;
+    }
+  }, [isDrawer, currentReceivedPath]);
 
   // Expose the handler for external use
   useEffect(() => {
