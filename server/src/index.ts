@@ -61,6 +61,10 @@ const gameRoom: GameRoom = {
 let gameTimer: NodeJS.Timeout | null = null;
 let timeLeft = 60;
 
+// Guesser timer state
+let guesserTimer: NodeJS.Timeout | null = null;
+let guesserTimeLeft = 10; // 10 seconds per guess
+
 // Timer functions
 const startGameTimer = () => {
   if (gameTimer) {
@@ -101,6 +105,45 @@ const stopGameTimer = () => {
 const resetGameTimer = () => {
   stopGameTimer();
   timeLeft = 60;
+};
+
+// Guesser timer functions
+const startGuesserTimer = () => {
+  if (guesserTimer) {
+    clearInterval(guesserTimer);
+  }
+  
+  guesserTimeLeft = 10;
+  guesserTimer = setInterval(() => {
+    guesserTimeLeft--;
+    
+    // Broadcast guesser timer update to all players
+    broadcastToRoom('guesser-timer-update', { guesserTimeLeft });
+    
+    if (guesserTimeLeft <= 0) {
+      // Time's up for this guess!
+      clearInterval(guesserTimer!);
+      guesserTimer = null;
+      
+      // Add system message about timeout
+      addSystemMessage('Time\'s up for this guess! Make another guess.');
+      
+      // Reset guesser timer for next guess
+      startGuesserTimer();
+    }
+  }, 1000);
+};
+
+const stopGuesserTimer = () => {
+  if (guesserTimer) {
+    clearInterval(guesserTimer);
+    guesserTimer = null;
+  }
+};
+
+const resetGuesserTimer = () => {
+  stopGuesserTimer();
+  guesserTimeLeft = 10;
 };
 
 // Word list for the game
@@ -214,6 +257,9 @@ io.on('connection', (socket) => {
       // Start the game timer
       startGameTimer();
       
+      // Start the guesser timer
+      startGuesserTimer();
+      
       // Notify drawer about the secret word
       const drawerSocket = io.sockets.sockets.get(gameRoom.drawerId!);
       if (drawerSocket) {
@@ -222,10 +268,22 @@ io.on('connection', (socket) => {
           drawerSocketId: gameRoom.drawerId!,
           messages: gameRoom.messages,
           timeLeft: timeLeft,
+          guesserTimeLeft: guesserTimeLeft,
           round: 1,
           maxRounds: 1
         });
       }
+      
+      // Notify guesser about game state
+      socket.emit('game-state', {
+        currentWord: gameRoom.secretWord,
+        drawerSocketId: gameRoom.drawerId!,
+        messages: gameRoom.messages,
+        timeLeft: timeLeft,
+        guesserTimeLeft: guesserTimeLeft,
+        round: 1,
+        maxRounds: 1
+      });
     }
 
     // Broadcast player joined
@@ -238,6 +296,7 @@ io.on('connection', (socket) => {
       currentWord: gameRoom.secretWord,
       currentDrawer: gameRoom.drawerId,
       timeLeft: timeLeft,
+      guesserTimeLeft: guesserTimeLeft,
       createdAt: new Date()
     });
 
@@ -299,8 +358,9 @@ io.on('connection', (socket) => {
       player.score += 10; // Award points
       addSystemMessage(`${player.name} guessed correctly! The word was "${gameRoom.secretWord}"`);
       
-      // Stop the timer
+      // Stop both timers
       stopGameTimer();
+      stopGuesserTimer();
       
       // Broadcast correct guess
       broadcastToRoom('correct-guess', {
@@ -318,9 +378,12 @@ io.on('connection', (socket) => {
 
       console.log(`Player ${player.name} guessed correctly: ${gameRoom.secretWord}`);
     } else {
-      // Wrong guess
+      // Wrong guess - restart guesser timer for next guess
       addSystemMessage(`${player.name} guessed: "${guess}" (incorrect)`);
       console.log(`Player ${player.name} guessed: ${guess} (incorrect)`);
+      
+      // Restart guesser timer for next guess
+      startGuesserTimer();
     }
 
     // Broadcast updated messages
@@ -351,6 +414,7 @@ io.on('connection', (socket) => {
         gameRoom.secretWord = '';
         gameRoom.gameState = GameState.WAITING;
         resetGameTimer(); // Reset timer when drawer leaves
+        resetGuesserTimer(); // Reset guesser timer too
       }
       
       // Reset game if guesser leaves
@@ -358,6 +422,7 @@ io.on('connection', (socket) => {
         gameRoom.guesserId = null;
         gameRoom.gameState = GameState.WAITING;
         resetGameTimer(); // Reset timer when guesser leaves
+        resetGuesserTimer(); // Reset guesser timer too
       }
 
       broadcastToRoom('player-left', socket.id);
