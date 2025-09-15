@@ -149,10 +149,25 @@ export const useSocket = (): UseSocketReturn => {
       }));
     });
 
+    newSocket.on('guesser-timer-update', (data) => {
+      console.log('Guesser timer update:', data);
+      setGameState(prev => ({
+        ...prev,
+        guesserTimeLeft: data.guesserTimeLeft
+      }));
+    });
+
     // Room events
     newSocket.on('room-updated', (room) => {
       console.log('Room updated:', room);
       setPlayers(room.players);
+      
+      // Update game state with timer info
+      setGameState(prev => ({
+        ...prev,
+        timeLeft: room.timeLeft,
+        guesserTimeLeft: room.guesserTimeLeft
+      }));
       
       // Update player role
       const currentPlayer = room.players.find((p: Player) => p.id === newSocket.id);

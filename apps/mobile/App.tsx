@@ -143,13 +143,26 @@ export default function App() {
             Players: {players.length}/2 | Status: {isConnected ? '✅ Connected' : '❌ Disconnected'}
           </Text>
           {/* Timer Display */}
-          {gameStarted && gameState?.timeLeft && (
-            <View style={styles.timerContainer}>
-              <Text style={styles.timerText}>
-                ⏰ Time Left: {gameState.timeLeft} seconds
-              </Text>
-            </View>
-          )}
+      {gameStarted && gameState?.timeLeft && (
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerText}>
+            ⏰ Game Time: {gameState.timeLeft} seconds
+          </Text>
+        </View>
+      )}
+      
+      {gameState?.guesserTimeLeft && isGuesser && (
+        <View style={[
+          styles.timerContainer,
+          { 
+            backgroundColor: gameState.guesserTimeLeft <= 3 ? '#dc3545' : '#28a745'
+          }
+        ]}>
+          <Text style={styles.timerText}>
+            🎯 Guess Time: {gameState.guesserTimeLeft} seconds
+          </Text>
+        </View>
+      )}
         </View>
 
         {/* Secret Word Display */}
