@@ -21,10 +21,50 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
   const [currentPath, setCurrentPath] = useState<DrawingPoint[]>([]);
   const [currentColor, setCurrentColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(4);
+  const [isDrawing, setIsDrawing] = useState(false);
   const lastEmitTime = useRef<number>(0);
-  const emitThrottle = 16; // ~60fps
+  const emitThrottle = 16; // ~60fps for better performance
   const pendingPoints = useRef<DrawingPoint[]>([]);
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastPoint = useRef<DrawingPoint | null>(null);
+  const minDistance = 2.0; // Increased minimum distance to prevent unwanted lines
+  const canvasRef = useRef<View>(null);
+  const pathId = useRef<string>('');
+  const isDrawingRef = useRef<boolean>(false); // Use ref to avoid stale closures
+
+  // Validate and clamp coordinates to canvas bounds
+  const validateCoordinates = useCallback((x: number, y: number): { x: number; y: number } => {
+    return {
+      x: Math.max(0, Math.min(x, width)),
+      y: Math.max(0, Math.min(y, height))
+    };
+  }, [width, height]);
+
+  // Check if two points are far enough apart to draw a line
+  const shouldDrawLine = useCallback((point1: DrawingPoint, point2: DrawingPoint): boolean => {
+    // Don't draw lines to (0,0) or from (0,0) - this prevents unwanted lines to top-left corner
+    if ((point1.x === 0 && point1.y === 0) || (point2.x === 0 && point2.y === 0)) {
+      return false;
+    }
+    
+    // Don't draw lines if either point is outside canvas bounds
+    if (point1.x < 0 || point1.x > width || point1.y < 0 || point1.y > height ||
+        point2.x < 0 || point2.x > width || point2.y < 0 || point2.y > height) {
+      return false;
+    }
+    
+    const distance = Math.sqrt(
+      Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
+    );
+    return distance >= minDistance;
+  }, [minDistance, width, height]);
+
+  // Simplified distance check for better performance
+  const isPointFarEnough = useCallback((point1: DrawingPoint, point2: DrawingPoint): boolean => {
+    const dx = point2.x - point1.x;
+    const dy = point2.y - point1.y;
+    return (dx * dx + dy * dy) >= (minDistance * minDistance);
+  }, [minDistance]);
 
   // Throttled emit function
   const throttledEmit = useCallback((data: DrawingData) => {
@@ -65,7 +105,7 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
           });
           pendingPoints.current = [];
         }
-      }, 50); // Send batched points every 50ms
+      }, 25); // Send batched points every 25ms for more responsive drawing
     }
   }, [throttledEmit, onDrawingData]);
 
@@ -76,6 +116,11 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
         if (data.action === 'clear') {
           setPaths([]);
           setCurrentPath([]);
+          lastPoint.current = null;
+        } else if (data.action === 'end') {
+          // End action - just reset current path, don't add any points
+          setCurrentPath([]);
+          lastPoint.current = null;
         } else if (data.points && data.points.length > 0) {
           // Add incoming drawing data
           const newPath = {
@@ -95,54 +140,137 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
     onPanResponderGrant: (evt) => {
       if (!isDrawer) return;
       const { locationX, locationY } = evt.nativeEvent;
+      const validatedCoords = validateCoordinates(locationX, locationY);
+      
+      // Check if touch is within canvas bounds
+      if (validatedCoords.x < 0 || validatedCoords.x > width || 
+          validatedCoords.y < 0 || validatedCoords.y > height) {
+        return;
+      }
+      
       const newPoint: DrawingPoint = { 
-        x: locationX, 
-        y: locationY, 
+        x: validatedCoords.x, 
+        y: validatedCoords.y, 
         color: currentColor,
         brushSize 
       };
+      
+      // Generate unique path ID
+      pathId.current = `path-${Date.now()}-${Math.random()}`;
+      
+      setIsDrawing(true);
+      isDrawingRef.current = true;
       setCurrentPath([newPoint]);
+      lastPoint.current = newPoint;
       
       // Send start action immediately
       batchedEmit(newPoint, 'start');
     },
     
     onPanResponderMove: (evt) => {
-      if (!isDrawer) return;
+      if (!isDrawer || !isDrawingRef.current) return;
       const { locationX, locationY } = evt.nativeEvent;
+      const validatedCoords = validateCoordinates(locationX, locationY);
+      
+      // Check if touch is still within canvas bounds
+      if (validatedCoords.x < 0 || validatedCoords.x > width || 
+          validatedCoords.y < 0 || validatedCoords.y > height) {
+        // Stop drawing if finger leaves canvas
+        setIsDrawing(false);
+        isDrawingRef.current = false;
+        if (currentPath.length > 0) {
+          const newPath = {
+            id: pathId.current,
+            points: [...currentPath]
+          };
+          setPaths(prev => [...prev, newPath]);
+          setCurrentPath([]);
+        }
+        lastPoint.current = null;
+        throttledEmit({
+          roomId: 'main-room',
+          points: [],
+          action: 'end'
+        });
+        return;
+      }
+      
       const newPoint: DrawingPoint = { 
-        x: locationX, 
-        y: locationY, 
+        x: validatedCoords.x, 
+        y: validatedCoords.y, 
         color: currentColor,
         brushSize 
       };
-      setCurrentPath(prev => [...prev, newPoint]);
       
-      // Send draw action with batching
-      batchedEmit(newPoint, 'draw');
+      // Only add point if it's far enough from the last point
+      if (!lastPoint.current || isPointFarEnough(lastPoint.current, newPoint)) {
+        setCurrentPath(prev => [...prev, newPoint]);
+        lastPoint.current = newPoint;
+        
+        // Send draw action with batching
+        batchedEmit(newPoint, 'draw');
+      }
     },
     
     onPanResponderRelease: () => {
-      if (!isDrawer) return;
+      if (!isDrawer || !isDrawingRef.current) return;
+      
+      setIsDrawing(false);
+      isDrawingRef.current = false;
       
       // Add current path to paths
       if (currentPath.length > 0) {
         const newPath = {
-          id: `path-${Date.now()}`,
-          points: currentPath
+          id: pathId.current,
+          points: [...currentPath]
         };
         setPaths(prev => [...prev, newPath]);
         setCurrentPath([]);
       }
       
-      // Send end action immediately
-      batchedEmit({ x: 0, y: 0, color: currentColor, brushSize }, 'end');
+      // Reset last point and path ID
+      lastPoint.current = null;
+      pathId.current = '';
+      
+      // Send end action immediately (no coordinates needed)
+      throttledEmit({
+        roomId: 'main-room',
+        points: [],
+        action: 'end'
+      });
+    },
+    
+    onPanResponderTerminate: () => {
+      // Handle case where touch is interrupted (e.g., phone call, notification)
+      if (isDrawingRef.current) {
+        setIsDrawing(false);
+        isDrawingRef.current = false;
+        if (currentPath.length > 0) {
+          const newPath = {
+            id: pathId.current,
+            points: [...currentPath]
+          };
+          setPaths(prev => [...prev, newPath]);
+          setCurrentPath([]);
+        }
+        lastPoint.current = null;
+        pathId.current = '';
+        throttledEmit({
+          roomId: 'main-room',
+          points: [],
+          action: 'end'
+        });
+      }
     },
   });
 
   const clearCanvas = () => {
     setPaths([]);
     setCurrentPath([]);
+    lastPoint.current = null;
+    pathId.current = '';
+    setIsDrawing(false);
+    isDrawingRef.current = false;
     throttledEmit({
       roomId: 'main-room',
       points: [],
@@ -160,66 +288,16 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
       </Text>
       
       <View
+        ref={canvasRef}
         {...panResponder.panHandlers}
         style={[styles.canvas, { width, height }]}
       >
+        {/* Render completed paths */}
         {paths.map((path) => (
           <View key={path.id} style={styles.pathContainer}>
-            {path.points.map((point, index) => {
-              const nextPoint = path.points[index + 1];
-              return (
-                <View key={`${path.id}-${index}`}>
-                  {/* Draw circle for the point */}
-                  <View
-                    style={[
-                      styles.point,
-                      {
-                        left: point.x - point.brushSize / 2,
-                        top: point.y - point.brushSize / 2,
-                        width: point.brushSize,
-                        height: point.brushSize,
-                        backgroundColor: point.color,
-                        borderRadius: point.brushSize / 2,
-                      }
-                    ]}
-                  />
-                  {/* Draw line to next point if it exists */}
-                  {nextPoint && (
-                    <View
-                      style={[
-                        styles.line,
-                        {
-                          left: point.x,
-                          top: point.y,
-                          width: Math.sqrt(
-                            Math.pow(nextPoint.x - point.x, 2) + 
-                            Math.pow(nextPoint.y - point.y, 2)
-                          ),
-                          height: point.brushSize,
-                          backgroundColor: point.color,
-                          transform: [
-                            {
-                              rotate: `${Math.atan2(
-                                nextPoint.y - point.y,
-                                nextPoint.x - point.x
-                              )}rad`
-                            }
-                          ],
-                        }
-                      ]}
-                    />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        ))}
-        {currentPath.map((point, index) => {
-          const nextPoint = currentPath[index + 1];
-          return (
-            <View key={`current-${index}`}>
-              {/* Draw circle for the point */}
+            {path.points.map((point, index) => (
               <View
+                key={`${path.id}-${index}`}
                 style={[
                   styles.point,
                   {
@@ -232,35 +310,27 @@ export const SimpleCanvas: React.FC<SimpleCanvasProps> = ({
                   }
                 ]}
               />
-              {/* Draw line to next point if it exists */}
-              {nextPoint && (
-                <View
-                  style={[
-                    styles.line,
-                    {
-                      left: point.x,
-                      top: point.y,
-                      width: Math.sqrt(
-                        Math.pow(nextPoint.x - point.x, 2) + 
-                        Math.pow(nextPoint.y - point.y, 2)
-                      ),
-                      height: point.brushSize,
-                      backgroundColor: point.color,
-                      transform: [
-                        {
-                          rotate: `${Math.atan2(
-                            nextPoint.y - point.y,
-                            nextPoint.x - point.x
-                          )}rad`
-                        }
-                      ],
-                    }
-                  ]}
-                />
-              )}
-            </View>
-          );
-        })}
+            ))}
+          </View>
+        ))}
+        
+        {/* Render current drawing path */}
+        {currentPath.map((point, index) => (
+          <View
+            key={`current-${index}`}
+            style={[
+              styles.point,
+              {
+                left: point.x - point.brushSize / 2,
+                top: point.y - point.brushSize / 2,
+                width: point.brushSize,
+                height: point.brushSize,
+                backgroundColor: point.color,
+                borderRadius: point.brushSize / 2,
+              }
+            ]}
+          />
+        ))}
       </View>
 
       {isDrawer && (
@@ -320,10 +390,11 @@ const styles = StyleSheet.create({
   },
   point: {
     position: 'absolute',
-  },
-  line: {
-    position: 'absolute',
-    transformOrigin: '0 50%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2, // Android shadow
   },
   pathContainer: {
     position: 'absolute',
