@@ -369,6 +369,19 @@ io.on('connection', (socket) => {
         points: 10
       });
 
+      // Broadcast updated scores to all players
+      broadcastToRoom('room-updated', {
+        id: gameRoom.id,
+        name: 'Main Room',
+        players: Array.from(gameRoom.players.values()),
+        gameState: gameRoom.gameState,
+        currentWord: gameRoom.secretWord,
+        currentDrawer: gameRoom.drawerId,
+        timeLeft: timeLeft,
+        guesserTimeLeft: guesserTimeLeft,
+        createdAt: new Date()
+      });
+
       // End the round
       gameRoom.gameState = GameState.ROUND_END;
       broadcastToRoom('round-ended', {
