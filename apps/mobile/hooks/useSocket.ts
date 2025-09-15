@@ -9,7 +9,7 @@ import type {
   GameStateData 
 } from 'shared-types';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:4000';
+const SERVER_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://192.168.1.6:4000';
 
 export interface UseSocketReturn {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
@@ -138,6 +138,15 @@ export const useSocket = (): UseSocketReturn => {
         type: 'system'
       };
       setMessages(prev => [...prev, endMessage]);
+    });
+
+    // Timer events
+    newSocket.on('timer-update', (data) => {
+      console.log('Timer update:', data);
+      setGameState(prev => ({
+        ...prev,
+        timeLeft: data.timeLeft
+      }));
     });
 
     // Room events

@@ -8,14 +8,14 @@
 ```
 
 ### 2. Open Web App
-- Go to: `http://192.168.1.13:5173`
+- Go to: `http://192.168.1.6:5173`
 - Enter name: "WebPlayer"
 - Click "Join Room"
 - You'll be the **Drawer** (first player)
 
 ### 3. Open Mobile App
 - Scan QR code in terminal OR
-- Go to: `http://192.168.1.13:8081` on mobile
+- Go to: `http://192.168.1.6:8081` on mobile
 - Enter name: "MobilePlayer" 
 - Click "Join Room"
 - You'll be the **Guesser** (second player)

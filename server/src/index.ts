@@ -20,15 +20,15 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
     origin: [
       process.env.CLIENT_URL || "http://localhost:5173",
-      "http://192.168.1.13:5173",
-      "http://192.168.1.13:5174",
-      "http://192.168.1.13:5175",
-      "http://192.168.1.13:8081",
-      "http://192.168.1.13:8082",
+      "http://192.168.1.6:5173",
+      "http://192.168.1.6:5174",
+      "http://192.168.1.6:5175",
+      "http://192.168.1.6:8081",
+      "http://192.168.1.6:8082",
       "http://localhost:8081",
       "http://localhost:8082",
-      "exp://192.168.1.13:8081",
-      "exp://192.168.1.13:8082"
+      "exp://192.168.1.6:8081",
+      "exp://192.168.1.6:8082"
     ],
     methods: ["GET", "POST"]
   }
@@ -55,6 +55,52 @@ const gameRoom: GameRoom = {
   guesserId: null,
   gameState: GameState.WAITING,
   messages: []
+};
+
+// Timer state
+let gameTimer: NodeJS.Timeout | null = null;
+let timeLeft = 60;
+
+// Timer functions
+const startGameTimer = () => {
+  if (gameTimer) {
+    clearInterval(gameTimer);
+  }
+  
+  timeLeft = 60;
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    
+    // Broadcast timer update to all players
+    broadcastToRoom('timer-update', { timeLeft });
+    
+    if (timeLeft <= 0) {
+      // Time's up!
+      clearInterval(gameTimer!);
+      gameTimer = null;
+      
+      // End the round
+      gameRoom.gameState = GameState.ROUND_END;
+      addSystemMessage('Time\'s up! The word was not guessed.');
+      
+      broadcastToRoom('round-ended', {
+        correctWord: gameRoom.secretWord,
+        nextDrawer: null
+      });
+    }
+  }, 1000);
+};
+
+const stopGameTimer = () => {
+  if (gameTimer) {
+    clearInterval(gameTimer);
+    gameTimer = null;
+  }
+};
+
+const resetGameTimer = () => {
+  stopGameTimer();
+  timeLeft = 60;
 };
 
 // Word list for the game
@@ -165,6 +211,9 @@ io.on('connection', (socket) => {
       gameRoom.gameState = GameState.PLAYING;
       addSystemMessage(`${playerName} joined as the guesser. Game started!`);
       
+      // Start the game timer
+      startGameTimer();
+      
       // Notify drawer about the secret word
       const drawerSocket = io.sockets.sockets.get(gameRoom.drawerId!);
       if (drawerSocket) {
@@ -172,7 +221,7 @@ io.on('connection', (socket) => {
           currentWord: gameRoom.secretWord,
           drawerSocketId: gameRoom.drawerId!,
           messages: gameRoom.messages,
-          timeLeft: 60, // 60 seconds per round
+          timeLeft: timeLeft,
           round: 1,
           maxRounds: 1
         });
@@ -188,7 +237,7 @@ io.on('connection', (socket) => {
       gameState: gameRoom.gameState,
       currentWord: gameRoom.secretWord,
       currentDrawer: gameRoom.drawerId,
-      timeLeft: 60,
+      timeLeft: timeLeft,
       createdAt: new Date()
     });
 
@@ -250,6 +299,9 @@ io.on('connection', (socket) => {
       player.score += 10; // Award points
       addSystemMessage(`${player.name} guessed correctly! The word was "${gameRoom.secretWord}"`);
       
+      // Stop the timer
+      stopGameTimer();
+      
       // Broadcast correct guess
       broadcastToRoom('correct-guess', {
         userId: socket.id,
@@ -298,12 +350,14 @@ io.on('connection', (socket) => {
         gameRoom.drawerId = null;
         gameRoom.secretWord = '';
         gameRoom.gameState = GameState.WAITING;
+        resetGameTimer(); // Reset timer when drawer leaves
       }
       
       // Reset game if guesser leaves
       if (socket.id === gameRoom.guesserId) {
         gameRoom.guesserId = null;
         gameRoom.gameState = GameState.WAITING;
+        resetGameTimer(); // Reset timer when guesser leaves
       }
 
       broadcastToRoom('player-left', socket.id);
@@ -316,5 +370,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Pictionary server running on port ${PORT}`);
   console.log(`🎮 Game room: ${gameRoom.id}`);
   console.log(`📝 Secret word: ${gameRoom.secretWord || 'Not set yet'}`);
-  console.log(`🌐 Server accessible at: http://192.168.1.13:${PORT}`);
+  console.log(`🌐 Server accessible at: http://192.168.1.6:${PORT}`);
 });

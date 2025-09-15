@@ -107,12 +107,12 @@ You can also run three separate terminals to start all components:
 pnpm --filter server dev
 ```
 
-The server will start on `http://192.168.1.13:4000` and show:
+The server will start on `http://192.168.1.6:4000` and show:
 ```
 🚀 Pictionary server running on port 4000
 🎮 Game room: main-room
 📝 Secret word: [word]
-🌐 Server accessible at: http://192.168.1.13:4000
+🌐 Server accessible at: http://192.168.1.6:4000
 ```
 
 **Troubleshooting Server Issues:**

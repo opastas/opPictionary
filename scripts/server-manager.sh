@@ -27,7 +27,7 @@ case "$1" in
     "status")
         if lsof -ti:4000 >/dev/null 2>&1; then
             echo "✅ Server is running on port 4000"
-            curl -s http://192.168.1.13:4000/health | jq . 2>/dev/null || curl -s http://192.168.1.13:4000/health
+            curl -s http://192.168.1.6:4000/health | jq . 2>/dev/null || curl -s http://192.168.1.6:4000/health
         else
             echo "❌ Server is not running"
         fi
