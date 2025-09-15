@@ -257,19 +257,34 @@ function App() {
             <div>
               <strong>Game Status:</strong> {gameState?.round || 1} / {gameState?.maxRounds || 1} rounds
             </div>
-            {gameState?.timeLeft && (
-              <div style={{
-                backgroundColor: '#007bff',
-                color: 'white',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                marginTop: '8px'
-              }}>
-                ⏰ Time Left: {gameState.timeLeft} seconds
-              </div>
-            )}
+      {gameState?.timeLeft && (
+        <div style={{
+          backgroundColor: '#007bff',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginTop: '8px'
+        }}>
+          ⏰ Game Time: {gameState.timeLeft} seconds
+        </div>
+      )}
+      
+      {gameState?.guesserTimeLeft && isGuesser && (
+        <div style={{
+          backgroundColor: gameState.guesserTimeLeft <= 3 ? '#dc3545' : '#28a745',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          marginTop: '8px',
+          animation: gameState.guesserTimeLeft <= 3 ? 'pulse 0.5s infinite' : 'none'
+        }}>
+          🎯 Guess Time: {gameState.guesserTimeLeft} seconds
+        </div>
+      )}
             <div>
               <strong>Players:</strong> {players.map(p => `${p.name} (${p.score} pts)`).join(', ')}
             </div>
