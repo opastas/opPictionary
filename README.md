@@ -6,10 +6,26 @@ A multiplayer pictionary game built with a pnpm monorepo containing web, mobile,
 
 - **Real-time Multiplayer**: 2-player game with live drawing synchronization
 - **Cross-Platform**: Web app (React + Vite) and mobile app (React Native + Expo)
-- **Touch Drawing**: Mobile-optimized drawing with SVG
+- **Touch Drawing**: Mobile-optimized drawing with native React Native Views
 - **Live Chat**: Real-time messaging and guessing
 - **Type Safety**: Shared TypeScript interfaces across all platforms
 - **Modern Stack**: Node.js, Express, Socket.IO, React, React Native
+
+## 📸 Screenshots
+
+### Mobile App
+![Mobile Join Screen](screenshots/mobile-join-screen.png)
+*Mobile app join screen with connection status*
+
+![Mobile Game Screen (Guesser)](screenshots/mobile-game-guesser.png)
+*Mobile app game screen showing guesser perspective with drawing canvas*
+
+### Web App
+![Web Join Screen](screenshots/web-join-screen.png)
+*Web app join screen in Chrome browser*
+
+![Web Game Screen (Drawer)](screenshots/web-game-drawer.png)
+*Web app game screen showing drawer perspective with drawing canvas and chat*
 
 ## 📋 Prerequisites
 
@@ -302,7 +318,7 @@ pnpm --filter mobile build
 - **Backend**: Node.js, Express, Socket.IO, TypeScript
 - **Web Frontend**: React, Vite, TypeScript, Socket.IO Client
 - **Mobile Frontend**: React Native, Expo, TypeScript, Socket.IO Client
-- **Drawing**: HTML5 Canvas (web), React Native SVG (mobile)
+- **Drawing**: HTML5 Canvas (web), Native React Native Views (mobile)
 - **Monorepo**: pnpm workspaces
 - **Type Safety**: Shared TypeScript interfaces
 
