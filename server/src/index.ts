@@ -121,14 +121,14 @@ const startGuesserTimer = () => {
     broadcastToRoom('guesser-timer-update', { guesserTimeLeft });
     
     if (guesserTimeLeft <= 0) {
-      // Time's up for this guess!
+      // Time's up for this guess! (informational only)
       clearInterval(guesserTimer!);
       guesserTimer = null;
       
-      // Add system message about timeout
+      // Add system message about timeout (informational)
       addSystemMessage('Time\'s up for this guess! Make another guess.');
       
-      // Reset guesser timer for next guess
+      // Reset guesser timer for next guess (informational only)
       startGuesserTimer();
     }
   }, 1000);
