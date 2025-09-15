@@ -14,10 +14,10 @@ A multiplayer pictionary game built with a pnpm monorepo containing web, mobile,
 ## 📸 Screenshots
 
 ### Mobile App
-![Mobile Join Screen](screenshots/mobile-join-screen.png)
+![Mobile Join Screen](screenshots/mobile-join-screen.jpg)
 *Mobile app join screen with connection status*
 
-![Mobile Game Screen (Guesser)](screenshots/mobile-game-guesser.png)
+![Mobile Game Screen (Guesser)](screenshots/mobile-game-guesser.jpg)
 *Mobile app game screen showing guesser perspective with drawing canvas*
 
 ### Web App
