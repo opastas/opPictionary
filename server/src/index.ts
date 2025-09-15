@@ -247,7 +247,7 @@ io.on('connection', (socket) => {
       player.isDrawer = true;
       gameRoom.drawerId = socket.id;
       gameRoom.secretWord = getRandomWord();
-      addSystemMessage(`${playerName} joined as the drawer. The word is: ${gameRoom.secretWord}`);
+      addSystemMessage(`${playerName} joined as the drawer.`);
     } else if (gameRoom.players.size === 2) {
       // Second player becomes guesser
       gameRoom.guesserId = socket.id;
@@ -356,7 +356,7 @@ io.on('connection', (socket) => {
     if (isCorrect) {
       // Correct guess!
       player.score += 10; // Award points
-      addSystemMessage(`${player.name} guessed correctly! The word was "${gameRoom.secretWord}"`);
+      addSystemMessage(`${player.name} guessed correctly!`);
       
       // Stop both timers
       stopGameTimer();
