@@ -7,6 +7,7 @@ export interface GameRoom {
   currentWord?: string;
   currentDrawer?: string;
   timeLeft?: number;
+  guesserTimeLeft?: number;
   createdAt: Date;
 }
 
@@ -56,6 +57,7 @@ export interface GameStateData {
   drawerSocketId: string;
   messages: ChatMessage[];
   timeLeft: number;
+  guesserTimeLeft?: number;
   round: number;
   maxRounds: number;
 }
@@ -85,6 +87,10 @@ export interface ServerToClientEvents {
   // Guess events
   'guess-received': (data: { userId: string; guess: string; isCorrect: boolean }) => void;
   'correct-guess': (data: { userId: string; word: string; points: number }) => void;
+  
+  // Timer events
+  'timer-update': (data: { timeLeft: number }) => void;
+  'guesser-timer-update': (data: { guesserTimeLeft: number }) => void;
   
   // Room events
   'room-updated': (room: GameRoom) => void;
