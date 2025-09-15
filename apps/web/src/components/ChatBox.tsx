@@ -5,6 +5,7 @@ interface ChatBoxProps {
   messages: ChatMessage[];
   isGuesser: boolean;
   gameState?: string;
+  timeLeft?: number;
   onSendGuess: (guess: string) => void;
   onSendMessage: (message: string) => void;
 }
@@ -13,6 +14,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
   messages,
   isGuesser,
   gameState,
+  timeLeft,
   onSendGuess,
   onSendMessage
 }) => {
@@ -95,7 +97,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
         alignItems: 'center'
       }}>
         <h3 style={{ margin: 0, fontSize: '16px' }}>Chat & Guesses</h3>
-        {isGuesser && gameState === 'playing' && (
+        {isGuesser && (
           <button
             onClick={toggleGuessMode}
             style={{
@@ -112,7 +114,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({
           </button>
         )}
         
-        {isGuesser && gameState === 'round_end' && (
+        {isGuesser && timeLeft && timeLeft <= 0 && (
           <div style={{
             padding: '4px 8px',
             backgroundColor: '#f44336',

@@ -223,7 +223,7 @@ export default function App() {
 
           {/* Input Area */}
           <View style={styles.inputContainer}>
-            {isGuesser && gameState?.gameState === 'playing' && (
+            {isGuesser && (
               <View style={styles.guessContainer}>
                 <TextInput
                   style={styles.guessInput}
@@ -242,7 +242,7 @@ export default function App() {
               </View>
             )}
             
-            {isGuesser && gameState?.gameState === 'round_end' && (
+            {isGuesser && gameState?.timeLeft && gameState.timeLeft <= 0 && (
               <View style={styles.gameOverContainer}>
                 <Text style={styles.gameOverText}>
                   🎮 Game Over! Time's up!

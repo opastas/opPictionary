@@ -233,6 +233,7 @@ function App() {
             messages={messages}
             isGuesser={isGuesser}
             gameState={gameState?.gameState}
+            timeLeft={gameState?.timeLeft}
             onSendGuess={handleSendGuess}
             onSendMessage={handleSendMessage}
           />
